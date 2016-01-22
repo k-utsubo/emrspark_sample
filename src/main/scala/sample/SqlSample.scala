@@ -14,14 +14,21 @@ object SqlSample {
 		val sc = new SparkContext(conf)  
 		val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 		import sqlContext.implicits._
-		
+		//val hist = sc.textFile(args(0)).map(_.split(","))
 		val hist = sc.textFile(args(0)).map(_.split(",")).
 			map(p => PriceHistAdj(p(0), p(1),p(2).toDouble,p(3).toDouble,p(4).toDouble,p(5).toDouble,p(6).toInt,p(7).toDouble)).toDF()
+
+		/*
+		val hist = sc.textFile(args(0)).map(_.split(",")).
+			map(p => PriceHistAdj(p(0), p(1),p(2).toDouble,p(3).toDouble,p(4).toDouble,p(5).toDouble,p(6).toInt,p(7).toDouble)).toDF()
+		
 		hist.registerTempTable("priceHistAdj")
 
 		// SQL statements can be run by using the sql methods provided by sqlContext.
 		val prices = sqlContext.sql("SELECT date,cprice,volume  FROM priceHistAdj WHERE stockCode='6758'")
 
+		println(prices)
+		
 		// The results of SQL queries are DataFrames and support all the normal RDD operations.
 		// The columns of a row in the result can be accessed by field index:
 		prices.map(t => "Date: " + t(0)).collect().foreach(println)
@@ -33,9 +40,11 @@ object SqlSample {
 		prices.map(_.getValuesMap[Any](List("date", "cprice"))).collect().foreach(println)
 		// Map("name" -> "Justin", "age" -> 19)
 		
-		val outputLocation = args(0) // s3n://bucket/
+		val outputLocation = args(1) // s3n://bucket/
 		val data=sc.makeRDD(Seq(prices))
 		data.saveAsTextFile(outputLocation)
+
+		*/
 		sc.stop()
 	}
 }

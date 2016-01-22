@@ -13,3 +13,5 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-mllib" % "1.5.2",
    "com.amazonaws" % "aws-java-sdk" % "1.10.46"
 )
+
+

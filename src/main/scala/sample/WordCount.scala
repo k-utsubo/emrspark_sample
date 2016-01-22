@@ -7,7 +7,7 @@ object WordCount {
 	  		println("wordcount,args="+args(0)+","+args(1))
 			val conf = new SparkConf().setAppName("wordcount").setMaster("yarn-cluster")
 			val sc = new SparkContext(conf)
-			
+
 		  	val textFile = sc.textFile(args(0))
 			val counts = textFile.flatMap(line => line.split(" "))
 		                 .map(word => (word, 1))
