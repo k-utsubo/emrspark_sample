@@ -1,7 +1,7 @@
 package sample
 import org.apache.spark._
 import org.apache.spark.sql._
-import org.apache.spark.sql.hive._
+
 
 //http://spark.apache.org/docs/latest/sql-programming-guide.html#upgrading-from-spark-sql-15-to-16
 //http://www.ne.jp/asahi/hishidama/home/tech/scala/spark/sql.html

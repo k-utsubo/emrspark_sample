@@ -2,6 +2,8 @@ package sample
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark._
 import org.apache.spark.api.java._
+import org.apache.spark.sql._
+import org.apache.spark.sql.types._
 
 //http://spark.apache.org/docs/latest/sql-programming-guide.html#upgrading-from-spark-sql-15-to-16
 case class PriceHistAdj(
@@ -10,41 +12,42 @@ case class PriceHistAdj(
 		
 object SqlSample {
 	def main(args: Array[String]) {
-		val conf = new SparkConf().setAppName("SparkPi").setMaster("yarn-cluster")
+		val conf = new SparkConf().setAppName("SparkSQL").setMaster("yarn-cluster")
 		val sc = new SparkContext(conf)  
+
 		val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-		import sqlContext.implicits._
-		//val hist = sc.textFile(args(0)).map(_.split(","))
-		val hist = sc.textFile(args(0)).map(_.split(",")).
-			map(p => PriceHistAdj(p(0), p(1),p(2).toDouble,p(3).toDouble,p(4).toDouble,p(5).toDouble,p(6).toInt,p(7).toDouble)).toDF()
+		// Import Row.
+		import org.apache.spark.sql.Row;
 
-		/*
-		val hist = sc.textFile(args(0)).map(_.split(",")).
-			map(p => PriceHistAdj(p(0), p(1),p(2).toDouble,p(3).toDouble,p(4).toDouble,p(5).toDouble,p(6).toInt,p(7).toDouble)).toDF()
+		// Import Spark SQL data types
+		import org.apache.spark.sql.types.{StructType,StructField,StringType};
+
+		val histRDD = sc.textFile(args(0)).map(_.split("\t")).
+			map(p => Row(p(0), p(1),p(2),p(3),p(4),p(5),p(6),p(7)))
+		val schemaString = "stockCode date oprice high low cprice volume split"
+		val schema =
+  			StructType(
+    		schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))	
+    		
+		// Apply the schema to the RDD.
+		val histDataFrame = sqlContext.createDataFrame(histRDD, schema)
+		// Register the DataFrames as a table.
+		histDataFrame.registerTempTable("priceHistAdj")
 		
-		hist.registerTempTable("priceHistAdj")
-
 		// SQL statements can be run by using the sql methods provided by sqlContext.
-		val prices = sqlContext.sql("SELECT date,cprice,volume  FROM priceHistAdj WHERE stockCode='6758'")
+		val results = sqlContext.sql("SELECT stockCode,date,cprice FROM priceHistAdj where stockCode='6758'")
 
-		println(prices)
-		
 		// The results of SQL queries are DataFrames and support all the normal RDD operations.
-		// The columns of a row in the result can be accessed by field index:
-		prices.map(t => "Date: " + t(0)).collect().foreach(println)
+		// The columns of a row in the result can be accessed by field index or by field name.
+		//results.map(t => "Name: " + t(0)).collect().foreach(println)
+		
+		val ary=results.map(_.getValuesMap[Any](List("stockCode", "date","cprice"))).collect()
 
-		// or by field name:
-		prices.map(t => "Cprice: " + t.getAs[String]("date")).collect().foreach(println)
-
-		// row.getValuesMap[T] retrieves multiple columns at once into a Map[String, T]
-		prices.map(_.getValuesMap[Any](List("date", "cprice"))).collect().foreach(println)
-		// Map("name" -> "Justin", "age" -> 19)
 		
 		val outputLocation = args(1) // s3n://bucket/
-		val data=sc.makeRDD(Seq(prices))
+		val data=sc.makeRDD(ary)
 		data.saveAsTextFile(outputLocation)
 
-		*/
 		sc.stop()
 	}
 }
